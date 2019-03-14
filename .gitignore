@@ -1,3 +1,17 @@
+.DS_Store
+
+# Python backup files
+*~
+
+# All subdirectories
+*/*
+
+# Input and output files
+*tsv
+*png
+*pdf
+*root
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
