@@ -99,39 +99,64 @@ def find_ks(arr, minrun, maxrun):
     ks, _ = stats.ks_2samp(arrtot, arrlim)
     return ks
 
-'''Takes list of tuples (run, val) and plots the ks statistic
-for a set of run ranges.  Interval is the distance between 
-start runs, and numruns is the overlap between adjacent points.'''
-def plot_ks_scan(arr, interval, numruns, titlestr, outstr):
-    fig = plt.figure(figsize=(8,4))
-    ax = fig.add_subplot(1,1,1)
-    minrun = 16908
-    maxrun = 17528
-    mins = np.arange(minrun, maxrun, interval)
-    xs = range(len(mins))
-    kslist = []
-    ticks = []
-    for min in mins:
-        max = min+numruns
-        if max > maxrun:
-            max = maxrun
-        ks = find_ks(arr, min, max)
-        kslist.append(ks)
-        ticks.append(str(int(min))+'-'+str(int(max)))
-    plt.xlabel('run range')
-    plt.xticks(xs, ticks, rotation=30)
-    plt.ylabel('ks stat')
-    plt.title(titlestr)
-    plt.plot(xs, kslist, 'ko')
-    plt.tight_layout()
-    plt.savefig('ksscan_'+outstr+'.pdf')
-    ax.clear()
+'''Takes a dict (indexed by pulse num) of lists of tuples (run, val) 
+and plots the ks statistic for a set of run ranges.  Intervals is the 
+number of ranges and overlap is the run number overlap between adjacent points.'''
+def plot_ks_scan(arr, titlestr, runNumMin, runNumMax, intervals, overlap):
+    runRange = runNumMax - runNumMin
+    diff = int(runRange/intervals)
+    if(titlestr=="T0_int"):
+        title = 'T0 integral sum ks stats'
+        outstr = 'integral'
+    elif(titlestr=="T0_time"):
+        title='T0 beam time ks stats'
+        outstr = 'time'
+    elif(titlestr =="T0_RMS"):
+        title = 'T0 RMS ks stats'
+        outstr = 'RMS'
+    elif(titlestr == "ctag"):
+        title = 'ctag ks stats'
+        outstr = 'ctag'
+    else:
+        print('Unknown title string: ' + titlestr)
+        sys.exit(1)
+    pdf = PdfPages('ksplots/ksscan'+outstr+'.pdf')
+    for pulse in range(8):
+        arrpulse = arr[pulse]
+        fig = plt.figure(figsize=(8,4))
+        ax = fig.add_subplot(1,1,1)
+        mins = np.arange(runNumMin, runNumMax, diff)
+        xs = range(len(mins))
+        kslist = []
+        ticks = []
+        for min in mins:
+            max = min+overlap
+            if max > runNumMax:
+                max = runNumMax
+            ks = find_ks(arrpulse, min, max)
+            kslist.append(ks)
+            ticks.append(str(int(min))+'-'+str(int(max)))
+        plt.xlabel('run range')
+        plt.xticks(xs, ticks, rotation=30)
+        plt.ylabel('ks stat')
+        plt.title('pulse '+str(pulse)+' '+title)
+        plt.plot(xs, kslist, 'ko')
+        plt.tight_layout()
+        pdf.savefig()
+        ax.clear()
+    pdf.close()
 
 '''Version of plot_hist_cdf for dividing into run ranges.
 Takes dictionary of tuples (run, val) arranged by pulse
-number and plots duo-plot of histogram and cdfs with ks
-values for a default set of run ranges for each pulse.'''
-def plot_hist_cdf_runrange(arr, titlestr, minmax):
+number, min and max run number, and difference between divisions
+and plots duo-plot of histogram and cdfs with ks values for 
+a default set of run ranges for each pulse.'''
+def plot_hist_cdf_runrange(arr, titlestr, runNumMin, runNumMax, intervals):
+    runRange = runNumMax - runNumMin
+    diff = int(runRange/intervals)
+    minmax = []
+    for i in range(intervals):
+        minmax.append((runNumMin + i*diff, runNumMin + ((i + 1)*diff) - 1))
     if(titlestr=="T0_int"):
         title = 'T0 integral sum histogram and cdf'
         xstr = 'integral sum [ADC ct]'
@@ -302,24 +327,19 @@ def get_arrs_from_root(filename):
 '''Histogram comparison for cluster time/energy with different
 integral sum ranges.  Takes dict with structure min integral: 
 (list) and array with sum of all integral ranges for comparison.'''
+
 def plot_hist_intrange(bins, dict, arrtot, titlestr, xstr, outstr):
     fig = plt.figure(figsize=(8, 4))
     ax = fig.add_subplot(1,1,1)
     arrtot = [i/sum(arrtot) for i in arrtot]
     plt.semilogy(bins, arrtot, label='all T0 integrals', color='k', lw=6)
-    #plt.fill_between(bins, 0, arrtot, color='silver')
     arr1 = [i/sum(dict[40000]) for i in dict[40000]]
     arr2 = [i/sum(dict[320000]) for i in dict[320000]]
     plt.semilogy(bins, arr1, 'C0', label='T0 integral 40,000-60,000')
     plt.semilogy(bins, arr2, 'C3', label='T0 integral 320,000-340,0000')
-    #for key in dict.keys():
-    #    arrlim = [i/sum(dict[key]) for i in dict[key]]
-    #    plt.semilogy(bins, arrlim, alpha = 0.7)
     plt.xlabel(xstr)
     plt.ylabel('events')
     plt.title(titlestr)
-    #ax.legend(loc='upper center', bbox_to_anchor=(0, 1.15), \
-    #               fontsize='small', fancybox=True, shadow=True)
     ax.legend(fontsize='small', fancybox=True, shadow=True)
     plt.savefig(outstr+'.png')
     ax.clear()
