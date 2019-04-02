@@ -14,6 +14,36 @@ import difflib
 
 plt.rcParams.update({'figure.max_open_warning': 0})
 
+'''Takes default dict of default dict of list and fills it 
+with contents of fileName .tsv file, indexing by physics 
+parameter and then bunch number.  Assumes .tsv file structure
+created by make_textfile.'''  
+def fill_dictionary(fileName):
+
+    totalDict = defaultdict(lambda: defaultdict(list))
+
+    runNumMin = 1000000
+    runNumMax = 0
+
+    try:
+        with open(fileName, 'r') as tsvin:
+            tsvin = csv.reader(tsvin, delimiter='\t')
+            titles = next(tsvin)
+            next(tsvin)
+            for row in tsvin:
+                runNum = int(row[0])
+                pulseNum = int(row[1])
+                runNumMin = min(runNumMin, runNum)
+                runNumMax = max(runNumMax, runNum)
+            #loop over physics entries (not run num or pulse num)                                                                                                                  
+                for physNum in range(2, len(titles)):
+                    totalDict[str(titles[physNum])][pulseNum].append((runNum, float(row[physNum])))
+            return totalDict, runNumMin, runNumMax
+    except FileNotFoundError as fnf_error:
+        print(fnf_error)
+        sys.exit(1)
+
+
 '''Function so that histograms can be plotted with no fill
 (outlines only).'''
 def histOutline(dataIn, thebins):
@@ -130,16 +160,10 @@ def plot_hist_cdf_runrange(arr, titlestr, minmax):
     pdf = PdfPages('hists/'+outstr+'_nodqc_all.pdf') 
     ksavg = np.zeros(len(minmax))
     for pulse in range(0, 8):
-        #print(pulse)
         figarr, axarr = plt.subplots(1,2, figsize=(8,4))
         arrtot = [i[1] for i in arr[pulse]]
-        #print(arrtot)
-        #arrtot = [i/sum(arrtot) for i in arrtot]
         x, f = make_cdf(arrtot)
         n, thebins, patches = axarr[0].hist(arrtot, bins=100, label='all runs, '+str(len(arrtot))+' events', facecolor = 'silver', density=True)
-        #(bins, n) = histOutline(arrtot)
-        #n = n/sum(n)
-        #axarr[0].plot(bins, n, 'k-', lw=3, label='all runs, '+str(len(arrtot))+' events')
         axarr[1].plot(x, f, label='all runs, '+str(len(arrtot))+' events', color='silver')
         axarr[1].fill_between(x, 0, f, color='silver')
         axarr[0].set_xlim(min(x), max(x))
@@ -151,17 +175,13 @@ def plot_hist_cdf_runrange(arr, titlestr, minmax):
             arrlim = [i[1] for i in arr[pulse] \
                           if i[0] >= minrun and i[0] <= maxrun]
             axarr[0].set_yscale('log')
-            #axarr[0].hist(arrlim, density=True, alpha=0, label='run '+str(minrun)+'-'+str(maxrun)+', '+str(len(arrlim))+' events', color = colors[i])
             (bins, n) = histOutline(arrlim, thebins)
-            #print(bins)
             n = n/(sum(n)*(bins[2]-bins[0]))
             axarr[0].plot(bins, n, color=colors[i], label='run '+str(minrun)+'-'+str(maxrun)+', '+str(len(arrlim))+' events')
             xlim, flim = make_cdf(arrlim)
             axarr[1].plot(xlim, flim, label='run '+str(minrun)+'-'+str(maxrun), color = colors[i])
-            #print(arr)
             ks = find_ks(arr[pulse], minrun, maxrun)
             ksavg[i]+=ks/len(minmax)
-            #loc, y1, y2 = find_max_diff(x, f, xlim, flim)
             ax1.plot(pulse, ks, color = colors[i], marker = 'o', linestyle='-', label='run '+str(minrun)+'-'+str(maxrun))
             if(pulse==0):
                 legend_elements.append(Line2D([0], [0], marker='o', color=colors[i], label='run '+str(minrun)+'-'+str(maxrun)))
@@ -169,12 +189,6 @@ def plot_hist_cdf_runrange(arr, titlestr, minmax):
                 axarr[1].text(0.6, 0.55-0.05*i, 'ks = %.2f'%ks, transform=axarr[1].transAxes, color=colors[i])
             else:
                 axarr[1].text(0.2, 0.75-0.05*i, 'ks = %.2f'%ks, transform=axarr[1].transAxes, color=colors[i])
-            #axarr[1].annotate("",
-            #            xy=(loc, min(y1, y2)), xycoords='data',
-            #            xytext=(loc, max(y1, y2)), textcoords='data',
-            #            arrowprops=dict(arrowstyle="<->",
-            #                            connectionstyle="arc3", color='k', lw=2),
-            #            )
         figarr.suptitle(titlestr+', pulse '+str(pulse))
         axarr[0].set_xlabel(xstr)
         axarr[0].set_ylabel('normalized counts')
