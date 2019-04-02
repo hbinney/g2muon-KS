@@ -9,6 +9,8 @@ from matplotlib.backends.backend_pdf import PdfPages
 import csv
 from scipy import interpolate
 from matplotlib.lines import Line2D
+import sys
+import difflib
 
 plt.rcParams.update({'figure.max_open_warning': 0})
 
@@ -99,12 +101,30 @@ def plot_ks_scan(arr, interval, numruns, titlestr, outstr):
 Takes dictionary of tuples (run, val) arranged by pulse
 number and plots duo-plot of histogram and cdfs with ks
 values for a default set of run ranges for each pulse.'''
-def plot_hist_cdf_runrange(arr, titlestr, xstr, outstr, minmax):
+def plot_hist_cdf_runrange(arr, titlestr, minmax):
+    if(titlestr=="T0_int"):
+        title = 'T0 integral sum histogram and cdf'
+        xstr = 'integral sum [ADC ct]'
+        outstr = 'integral'
+    elif(titlestr=="T0_time"):
+        title='T0 beam time histogram and cdf'
+        xstr = 'time [ct]'
+        outstr = 'time'
+    elif(titlestr =="T0_RMS"):
+        title = 'T0 RMS histogram and cdf',
+        xstr = 'RMS [ct]'
+        outstr = 'RMS'
+    elif(titlestr == "ctag"):
+        title = 'ctag histgram and cdf'
+        xstr = 'ctag'
+        outstr = 'ctag'
+    else:
+        print('Unknown title string: ' + titlestr)
+        sys.exit(1)
     fig = plt.figure(figsize=(8,4))
     ax1 = fig.add_subplot(1,1,1)
     fig2 = plt.figure()
     ax2 = fig2.add_subplot(1,1,1)
-    #colors = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9']
     colors = ['C6', 'C3', 'C1', 'C2', 'C0', 'C4', 'C5', 'C7', 'C8', 'C9']
     legend_elements = list()
     pdf = PdfPages('hists/'+outstr+'_nodqc_all.pdf') 

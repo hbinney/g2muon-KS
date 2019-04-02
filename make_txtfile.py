@@ -22,7 +22,7 @@ except Exception as ex:
 
 with open(runstr+".tsv", "w") as tsvfile:
     writer = csv.writer(tsvfile, delimiter='\t', lineterminator='\n')
-    writer.writerow(["run num", "subrun num", "event num", "pulse index", "int sum", "time", "RMS", "ctag"])
+    writer.writerow(["run_num", "subrun_num", "event_num", "pulse_index", "T0_int_sum", "T0_time", "T0_RMS", "ctag"])
     for run in runs:
         print(run)
         if(os.path.isfile(run)):
