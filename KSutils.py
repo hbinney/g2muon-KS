@@ -246,46 +246,6 @@ def plot_hist_cdf_runrange(arr, titlestr, runNumMin, runNumMax, intervals):
     ax1.clear()
     pdf.close()
     ax2.clear()
-
-'''ks testing for integral ranges - but can't just do with a histogram!
-TODO: fix this!'''
-def plot_hist_cdf_intrange(arrtot, arr1, arr2, titlestr, xstr, outstr):
-    figarr, axarr = plt.subplots(1,2, figsize=(8,4))
-    x, f = make_cdf(arrtot)
-    axarr[0].hist(arrtot, label='all T0 integrals, '+str(len(arrtot))+' events', facecolor = 'silver', density=True)
-    axarr[1].plot(x, f, label='all T0 integrals, '+str(len(arrtot))+' events', color='silver')
-    axarr[1].fill_between(x, 0, f, color='silver')
-    axarr[0].set_xlim(min(x), max(x))
-    axarr[1].set_xlim(min(x), max(x))
-    axarr[1].set_ylim(0, 1)
-    axarr[0].set_yscale('log')
-    (bins, n) = histOutline(arr1)
-    (bins2, n2) = histOutline(arr2)
-    n = n/(sum(n)*(bins[2]-bins[0]))
-    n2 = n2/(sum(n2)*(bins2[2]-bins2[0]))
-    axarr[0].plot(bins, n, color='C0', label='T0 integral 40,000-60,000, '+str(len(arr1))+' events')
-    axarr[0].plot(bins2, n2, color='C3', label='T0 integral 320,000-340,000, '+str(len(arr2))+' events')
-    xlim, flim = make_cdf(arr1)
-    xlim2, flim2 = make_cdf(arr2)
-    axarr[1].plot(xlim, flim, label='T0 integral 40,000-60,000', color = 'C0')
-    axarr[1].plot(xlim2, flim2, label='T0 integral 320,000-340,000', color='C3')
-    ks, _ = stats.ks_2samp(arrtot, arr1)
-    ks2, _ = stats.ks_2samp(arrtot, arr2)
-    axarr[1].text(0.2, 0.75, 'ks = %.2f'%ks, transform=axarr[1].transAxes, color='C0')
-    axarr[1].text(0.2, 0.75-0.05, 'ks = %.2f'%ks2, transform=axarr[1].transAxes, color='C3')
-    axarr[0].set_xlabel(xstr)
-    axarr[0].set_ylabel('normalized counts')
-    axarr[1].set_xlabel(xstr)
-    axarr[1].set_ylabel('cdf')
-    handles, labels = axarr[0].get_legend_handles_labels()
-    figarr.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.16, 0.98), \
-                      fontsize='x-small', fancybox=True, shadow=True)
-    figarr.suptitle(titlestr)
-    plt.savefig('ks_intranges_'+outstr+'.png')
-    axarr[0].clear()
-    axarr[1].clear()
-
-
     
 '''Turn root hists into py dictionaries/arrays for use in other functions.
 Returns list with histogram bins for time and energy, dictionaries with the 
@@ -325,7 +285,6 @@ def get_arrs_from_root(filename):
 '''Histogram comparison for cluster time/energy with different
 integral sum ranges.  Takes dict with structure min integral: 
 (list) and array with sum of all integral ranges for comparison.'''
-
 def plot_hist_intrange(bins, dict, arrtot, titlestr, xstr, outstr):
     fig = plt.figure(figsize=(8, 4))
     ax = fig.add_subplot(1,1,1)
