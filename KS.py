@@ -26,12 +26,6 @@ def main():
     plot_hist_intrange(energybins, energydict, energytot, 'cluster energy histogram, different integral ranges', 'cluster energy [MeV]', 'energyhist')
     plot_hist_intrange(timebins, timedict, timetot, 'cluster time histogram, different integral ranges', 'cluster time [c.t.]', 'timehist')
     
-    runRange = runNumMax - runNumMin
-    diff = int(runRange/intervals)
-    minmax = []
-    for i in range(intervals):
-        minmax.append((runNumMin + i*diff, runNumMin + ((i + 1)*diff) - 1))
-
     for title in totalDict.keys():
         plot_hist_cdf_runrange(totalDict[title], title, runNumMin, runNumMax, intervals)
         plot_ks_scan(totalDict[title], title, runNumMin, runNumMax, intervals, overlap)

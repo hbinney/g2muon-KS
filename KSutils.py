@@ -10,7 +10,6 @@ import csv
 from scipy import interpolate
 from matplotlib.lines import Line2D
 import sys
-import difflib
 
 plt.rcParams.update({'figure.max_open_warning': 0})
 
@@ -29,14 +28,13 @@ def fill_dictionary(fileName):
         with open(fileName, 'r') as tsvin:
             tsvin = csv.reader(tsvin, delimiter='\t')
             titles = next(tsvin)
-            next(tsvin)
             for row in tsvin:
                 runNum = int(row[0])
                 pulseNum = int(row[1])
                 runNumMin = min(runNumMin, runNum)
                 runNumMax = max(runNumMax, runNum)
-            #loop over physics entries (not run num or pulse num)                                                                                                                  
-                for physNum in range(2, len(titles)):
+                #loop over physics entries (after run num, sub run num, event num, pulse num)
+                for physNum in range(4, len(titles)):
                     totalDict[str(titles[physNum])][pulseNum].append((runNum, float(row[physNum])))
             return totalDict, runNumMin, runNumMax
     except FileNotFoundError as fnf_error:
@@ -120,7 +118,7 @@ def plot_ks_scan(arr, titlestr, runNumMin, runNumMax, intervals, overlap):
     else:
         print('Unknown title string: ' + titlestr)
         sys.exit(1)
-    pdf = PdfPages('ksplots/ksscan'+outstr+'.pdf')
+    pdf = PdfPages('ksplots/ksscan_'+outstr+'.pdf')
     for pulse in range(8):
         arrpulse = arr[pulse]
         fig = plt.figure(figsize=(8,4))
